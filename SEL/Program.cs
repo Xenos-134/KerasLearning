@@ -61,12 +61,12 @@ namespace SEL
         static void Main(string[] args)
         {
 
-            using (Bitmap image = new Bitmap("C:/Users/artem/Desktop/SE/hand.jpg"))
+            using (Bitmap image = new Bitmap("C:/Users/artem/Desktop/SE/hand2.jpg"))
             {
                 
                 NormalizeImage(image);
-                Threshold imageThreshold = CalculateThreshold(image);
-                SeparateThreshold(image, imageThreshold);
+                //Threshold imageThreshold = CalculateThreshold(image);
+                //SeparateThreshold(image, imageThreshold);
 
 
 
@@ -86,7 +86,7 @@ namespace SEL
              {Cg∈[85, 135] && Cr∈[−Cg + 260, −Cg + 280]}
              */
             
-            return ((85 <= newPixel.Cg && newPixel.Cg <= 135) && (((-newPixel.Cg + 260) <= newPixel.Cr) && (newPixel.Cr <= (-newPixel.Cg + 280))));
+            return ((85<= newPixel.Cg && newPixel.Cg <= 150) && (((-newPixel.Cg + 260) <= newPixel.Cr) && (newPixel.Cr <= (-newPixel.Cg + 280))));
         }
 
 
@@ -179,7 +179,7 @@ namespace SEL
             }
 
 
-/*            for (int y = 0; y < image.Height; y++)
+            for (int y = 0; y < image.Height; y++)
             {
                 for (int x = 0; x < image.Width; x++)
                 {
@@ -191,7 +191,7 @@ namespace SEL
                     }
                     image.SetPixel(x, y, Color.FromArgb(0, 0, 0));
                 }
-            }*/
+            }
         }
 
 
