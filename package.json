@@ -1,0 +1,23 @@
+{
+  "name": "tensorflowlearning",
+  "version": "1.0.0",
+  "description": "Learning of tensor_flow",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tensorflow-models/hand-pose-detection": "^2.0.0",
+    "@tensorflow/tfjs": "^3.18.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.18.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.18.0",
+    "@tensorflow/tfjs-core": "^3.18.0",
+    "@tensorflow/tfjs-node": "^3.18.0",
+    "fs": "^0.0.1-security",
+    "image-size": "^1.0.1",
+    "tensorflow-models": "^0.0.1"
+  }
+}
