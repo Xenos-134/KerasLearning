@@ -3,6 +3,7 @@
 #                       TRAIN MODEL                            #                                        
 #==============================================================#
 
+from cProfile import label
 from statistics import mode
 import sys
 from tabnanny import verbose
@@ -15,84 +16,44 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D, Dense, MaxPooling1D, Flatten
 from tensorflow.keras.optimizers import Adam
 
+import numpy as np
+from sklearn.preprocessing import LabelBinarizer
+encoder = LabelBinarizer()
+
+
 def train(input_file) :
     print("==================( CNN Training (START) )==================")
     #TODO
     print("==================( CNN Training   (END) )==================")
 
-def main():
-    #flags = sys.argv
-    #input_file = open(sys.argv, 'r')
-    #input_file.close() 
-    test_train2()
 
 
 #==============================================================#
 #                       TEST PART OF CNN                       #                                        
 #==============================================================#
-def test_train():
-    (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
-    print("YOLOOOO")
-
-    # Normalize pixel values to be between 0 and 1
-    train_images, test_images = train_images / 255.0, test_images / 255.0
-
-    class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
-               'dog', 'frog', 'horse', 'ship', 'truck']
-            
-    plt.figure(figsize=(10,10))
-    for i in range(25):
-        plt.subplot(5,5,i+1)
-        plt.xticks([])
-        plt.yticks([])
-        plt.grid(False)
-        plt.imshow(train_images[i])
-        # The CIFAR labels happen to be arrays, 
-        # which is why you need the extra index
-        plt.xlabel(class_names[train_labels[i][0]])
-    plt.show()
-
-    model = models.Sequential()
-    model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-
-    model.add(layers.Flatten())
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(10))
-
-    model.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-              metrics=['accuracy'])
-
-    history = model.fit(train_images, train_labels, epochs=10, 
-                        validation_data=(test_images, test_labels))
-
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.ylim([0.5, 1])
-    plt.legend(loc='lower right')
-
-    test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
-
-
-    #==============================================================#
-    #                       My TEST                                #                                        
-    #==============================================================#
 def test_train2():
-
     dataset = tf.data.TextLineDataset(['./out.txt'])
-    #print(list(dataset)['b'])
-    for element in dataset.as_numpy_iterator():
-        print(element.decode())
-        print("\n")
+    labels = tf.data.TextLineDataset(['./labels.txt'])
 
+    train_dataset = []
+    labels_dataset = []
+
+    for element in dataset.as_numpy_iterator():
+        #POR ENQUANTO VOU APENAS GERAR UMA LISTA UNIDIMENSIONAL
+        text_array = element.decode().replace("[", "").replace("]", "").replace(",", "").split()
+        numeric_array = [float(x) for x in text_array]
+        train_dataset.append(numeric_array)
+
+    for element in labels.as_numpy_iterator():
+        labels_dataset.append(element.decode().replace(",", ""))
+
+    labels_dataset = generate_labels(labels_dataset)
+    print(labels_dataset)
+
+    #print(train_dataset)
+   
     model = models.Sequential()
-    model.add(layers.Flatten(input_shape=(21, 3)))
+    model.add(layers.Flatten(input_shape=(63,)))
     model.add(layers.Dense(128, activation='relu'))
     model.add(layers.Dropout(0.2))
     model.add(layers.Dense(10))
@@ -101,23 +62,52 @@ def test_train2():
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
 
-    model.summary()
+    #model.summary()
 
-    history = model.fit(x_d, y_d, epochs=10, 
-                        validation_data=(x_d, y_d))
+    history = model.fit(train_dataset, labels_dataset, epochs=10, 
+                        validation_data=(train_dataset, labels_dataset))
 
     print("==================== [ FINISHED ]==========================")
-    test_loss, test_acc = model.evaluate(x_d, y_d, verbose=2)
+    test_loss, test_acc = model.evaluate(train_dataset, labels_dataset, verbose=2)
     print("===========================================================")
 
-x_d = [[[0.6291600465774536, 0.844545841217041, 1.1117052878262257e-07], [0.5431569218635559, 0.7827625274658203, -0.021357273682951927], [0.4689844250679016, 0.6763589978218079, -0.04266219213604927], [0.4039904475212097, 0.6030465364456177, -0.06900499016046524], [0.40227407217025757, 0.5378228425979614, -0.09290510416030884], [0.5471081733703613, 0.5004515051841736, -0.00720450421795249], [0.4878564178943634, 0.4093206822872162, -0.06483501940965652], [0.42978712916374207, 0.42730531096458435, -0.11060430109500885], [0.40212029218673706, 0.4741489291191101, -0.13365936279296875], [0.5880674719810486, 0.46972644329071045, -0.02177952229976654], [0.5620837807655334, 0.3112630844116211, -0.05667524039745331], [0.5430978536605835, 0.20027783513069153, -0.07713907212018967], [0.5327744483947754, 0.10804992914199829, -0.08792221546173096], [0.6360090374946594, 0.4808286130428314, -0.045949872583150864], [0.6463444232940674, 0.3251984715461731, -0.08152700960636139], [0.6491594910621643, 0.21699869632720947, -0.0975341647863388], [0.6491096615791321, 0.12528255581855774, -0.10395258665084839], [0.6793196201324463, 0.5310884714126587, -0.07306592911481857], [0.724869966506958, 0.42784032225608826, -0.10207321494817734], [0.7529304623603821, 0.34727776050567627, -0.10893472284078598], [0.7767509818077087, 0.2747349143028259, -0.10951437801122665]],
-[[0.6429705619812012, 0.7659620642662048, 2.1153546185814776e-06], [0.4707587957382202, 0.6691473722457886, -0.04677189141511917], [0.3651762902736664, 0.5721825361251831, -0.07554031908512115], [0.2676474452018738, 0.46696358919143677, -0.10893625766038895], [0.16544100642204285, 0.41565582156181335, -0.13300730288028717], [0.4788172245025635, 0.438412070274353, -0.02158409170806408], [0.44974327087402344, 0.2947956323623657, -0.07639279961585999], [0.4385887682437897, 0.21161453425884247, -0.12086527794599533], [0.4362385869026184, 0.12926089763641357, -0.15707185864448547], [0.5932748317718506, 0.4415224492549896, -0.040849607437849045], [0.6527696251869202, 0.29515066742897034, -0.12941859662532806], [0.6958099007606506, 0.1978442519903183, -0.19640003144741058], [0.7418259978294373, 0.11352232098579407, -0.23889009654521942], [0.7004550695419312, 0.4874690771102905, -0.06282439082860947], [0.7554233074188232, 0.42335259914398193, -0.1612357497215271], [0.6844547390937805, 0.5122921466827393, -0.1562158614397049], [0.6376916766166687, 0.5787721872329712, -0.12662914395332336], [0.7855128049850464, 0.5499746799468994, -0.08854746073484421], [0.8143615126609802, 0.4981546998023987, -0.16077890992164612], [0.7459303736686707, 0.5521777868270874, -0.14101067185401917], [0.6959929466247559, 0.5940427780151367, -0.10887216031551361]],
-[[0.49776726961135864, 0.9217588901519775, 1.083246388589032e-06], [0.33987730741500854, 0.8248209953308105, -0.06764762103557587], [0.2702133059501648, 0.6646791696548462, -0.09601752460002899], [0.3570505976676941, 0.5369426012039185, -0.13221797347068787], [0.5017513632774353, 0.4860204756259918, -0.16285844147205353], [0.33047544956207275, 0.46672993898391724, 0.001313367043621838], [0.36907774209976196, 0.3100876212120056, -0.0608137808740139], [0.41198161244392395, 0.2147742509841919, -0.10985931009054184], [0.44621720910072327, 0.12764286994934082, -0.14510974287986755], [0.45639315247535706, 0.4753395915031433, -0.0236711073666811], [0.44067561626434326, 0.2822750508785248, -0.09204383194446564], [0.4238824248313904, 0.18770289421081543, -0.1339353621006012], [0.415103942155838, 0.09810587763786316, -0.1527339220046997], [0.5806101560592651, 0.5252401232719421, -0.0630718395113945], [0.6054097414016724, 0.3945041000843048, -0.19057725369930267], [0.5437914729118347, 0.5266286730766296, -0.20046366751194], [0.5041374564170837, 0.6227354407310486, -0.1672736555337906], [0.6943250894546509, 0.6072602868080139, -0.1080092340707779], [0.6710994839668274, 0.5273870229721069, -0.21523402631282806], [0.600814700126648, 0.6186787486076355, -0.21358785033226013], [0.5656591057777405, 0.6898998022079468, -0.18586395680904388]]
-] 
+    #save_model(model, "test_model")
+
+labels = ["A", "B", "C", "D", "E", "F"]
 
 
-y_d = [1, 2, 3]
+def generate_labels(train_labels):
+    new_labels_list = []
+    for label in train_labels:
+        new_labels_list.append(labels.index(label))
+
+    return new_labels_list
+    
+
+
+def save_model(model, model_name):
+    #TODO
+    print("TEST")
+    model.save("./"+model_name)
+    save_wights(model, model_name)
+
+
+def save_wights(model, file_name):
+    model.save_weights('./'+file_name+'.h5')
+
+def load_model(file_name):
+    print("TEST")
+    model = tf.keras.models.load("./"+file_name)
+
+
+def load_weights(model, file_name):
+    model.load_wights(file_name+'.h5')
+
+
+def main():
+    #flags = sys.argv
+    #input_file = open(sys.argv, 'r')
+    #input_file.close() 
+    test_train2()
 
 main()
-
-
