@@ -19,6 +19,8 @@ from tensorflow.keras.optimizers import Adam
 
 import numpy as np
 from sklearn.preprocessing import LabelBinarizer
+from hands_data_extraction import *
+
 encoder = LabelBinarizer()
 
 
@@ -99,13 +101,22 @@ def get_model(file_name):
     #print(model.get_weights())
     return model
 
+
+def predict(image_name, model): #Only For single image for now
+    print("PREDICTING LABEL FOR: ", image_name)
+    out_data = str(read_one_image(image_name, False)).replace("[", "").replace("]", "").replace(",", "").split()
+    #print(model.predict([train_dataset[-15]]))
+    numeric_array = [float(x) for x in out_data]
+    print("Predicted: ", labels[np.argmax(model.predict([numeric_array]))])
+
 def main():
     #flags = sys.argv
     #input_file = open(sys.argv, 'r')
     #input_file.close() 
-    test_train2()
+    #test_train2()
 
-    #loaded_model = get_model(TEMPORARY_MODEL_NAME)
+    loaded_model = get_model(TEMPORARY_MODEL_NAME)
+    predict("test.jpg", loaded_model)
 
 
 main()
