@@ -19,7 +19,7 @@ from tensorflow.keras.optimizers import Adam
 
 import numpy as np
 from sklearn.preprocessing import LabelBinarizer
-from hands_data_extraction import *
+from hands_data_extraction import * 
 
 encoder = LabelBinarizer()
 
@@ -31,7 +31,7 @@ TEMPORARY_MODEL_NAME = "hands_model"
 #==============================================================#
 def test_train2():
     dataset = tf.data.TextLineDataset(['./out.txt'])
-    labels = tf.data.TextLineDataset(['./labels.txt'])
+    dataset_labels = tf.data.TextLineDataset(["out_labels.txt"])
 
     train_dataset = []
     labels_dataset = []
@@ -42,27 +42,27 @@ def test_train2():
         numeric_array = [float(x) for x in text_array]
         train_dataset.append(numeric_array)
 
-    for element in labels.as_numpy_iterator():
+    for element in dataset_labels.as_numpy_iterator():
         labels_dataset.append(element.decode().replace(",", ""))
 
     labels_dataset = generate_labels(labels_dataset)
     #print(labels_dataset)
 
-    print(len(train_dataset))
+    print("==================== [ START ]==========================")
    
     model = models.Sequential()
     model.add(layers.Dense(32, input_shape=(63, ) ,activation='relu')) #Os neuronios 'e aleatorio
     model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(3, activation='softmax'))
+    model.add(layers.Dense(27, activation='softmax'))
 
     model.compile(optimizer='adam',
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
 
     model.summary()
-    print(labels_dataset)
+    #print(labels_dataset)
 
-    history = model.fit(train_dataset, labels_dataset, epochs=30, 
+    history = model.fit(train_dataset, labels_dataset, epochs=10, 
                         validation_data=(train_dataset, labels_dataset))
                         
     print("==================== [ FINISHED ]==========================")
@@ -72,7 +72,7 @@ def test_train2():
     save_model(model, TEMPORARY_MODEL_NAME)
     #print(model.predict([train_dataset[-15]]))
 
-labels = ["A", "B", "C"]
+labels = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
 
 def generate_labels(train_labels):
@@ -108,6 +108,7 @@ def predict(image_name, model): #Only For single image for now
     #print(model.predict([train_dataset[-15]]))
     numeric_array = [float(x) for x in out_data]
     print("Predicted: ", labels[np.argmax(model.predict([numeric_array]))])
+    print("Predicted: ", model.predict([numeric_array]))
 
 def main():
     #flags = sys.argv
