@@ -4,10 +4,13 @@
 #==============================================================#
 from cProfile import label
 from http.client import TEMPORARY_REDIRECT
+from operator import ne
 from statistics import mode
 import sys
 from tabnanny import verbose
+from tkinter.filedialog import Directory
 from traceback import print_tb
+from turtle import width
 
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
@@ -30,6 +33,14 @@ import matplotlib.pyplot as plt
 
 from enum import  Enum
 from tensorflow.python.client import device_lib
+
+import PIL
+import PIL.Image
+import pathlib
+
+
+
+
 
 encoder = LabelBinarizer()
 
@@ -200,73 +211,95 @@ def get_flags(flags):
     print(flags_obj)
     return flags_obj
 
+
 #==============================================================#
 #              TRAIN USING MEDIA PIPE EXTRACTED DATA           #                                        
 #==============================================================#
-def train_vgg16(): #TODO DIR PATH AS ARG
-    print("START TRAIN WITH VGG16 ALGO")
-    #FOR NOW WILL USE EXTERNAL DATASET (CIFAR!))
-
-    (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
-
-    # Normalize pixel values to be between 0 and 1
-    train_images, test_images = train_images / 255.0, test_images / 255.0
-
-    class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
-               'dog', 'frog', 'horse', 'ship', 'truck']
-
-    plt.figure(figsize=(10,10))
-    for i in range(25):
-        plt.subplot(5,5,i+1)
-        plt.xticks([])
-        plt.yticks([])
-        plt.grid(False)
-        plt.imshow(train_images[i])
-        # The CIFAR labels happen to be arrays, 
-        # which is why you need the extra index
-        plt.xlabel(class_names[train_labels[i][0]])
-    plt.show()
-
-    model = models.Sequential()
-    model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-
-    model.add(layers.Flatten())
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(layers.Dense(10))
-
-    model.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-              metrics=['accuracy'])
-
-    history = model.fit(train_images, train_labels, epochs=2, 
-                        validation_data=(test_images, test_labels))
-
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.ylim([0.5, 1])
-    plt.legend(loc='lower right')
-
-    test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
-
-    print(test_acc)
-
-
 def vgg16_image_preprocess():
-    print(">>>>>>>>>>> START TRAIN")
+    data_dir = pathlib.Path("./asl_train")
+    print(data_dir)
+    image_count = len(list(data_dir.glob('*/*.jpg')))
+    print(f'FOUND {image_count} IMAGES.')
+    #signA = list(data_dir.glob('A/*'))
+    #im = PIL.Image.open(str(signA[4]))
+    #im.show()
+    
+    batch_size = 2
+    image_heigth = 256
+    image_width = 256
 
-    custom_image_dataset = tf.keras.preprocessing.image_dataset_from_directory("./asl_train", labels='inferred');
+    train_ds = tf.keras.utils.image_dataset_from_directory(
+        data_dir,
+        validation_split=0.2,
+        subset="training",
+        seed=123,
+        image_size=(image_heigth, image_width),
+        batch_size=batch_size)
 
-    for elm in custom_image_dataset.as_numpy_iterator():
-        print(elm)
-        return
+    
+    class_names = train_ds.class_names
+    print(class_names)
+
+
+    val_ds = tf.keras.utils.image_dataset_from_directory(
+        data_dir,
+        validation_split=0.2,
+        subset="validation",
+        seed=123,
+        image_size=(image_heigth, image_width),
+        batch_size=batch_size)
+
+    ''' 
+    plt.figure(figsize=(17, 17))
+    for images, labels in train_ds.take(1):
+        for i in range(16):
+            ax = plt.subplot(4, 4, i + 1)
+            plt.imshow(images[i].numpy().astype("uint8"))
+            plt.title(class_names[labels[i]])
+            plt.axis("off")
+        
+    plt.show()
+    '''
+
+
+    AUTOTUNE = tf.data.AUTOTUNE
+
+
+    train_ds = train_ds.cache().prefetch(buffer_size= tf.data.AUTOTUNE)
+    val_ds = val_ds.cache().prefetch(buffer_size= tf.data.AUTOTUNE)
+
+    num_classes = 26
+    
+    
+
+    model = tf.keras.Sequential([
+        tf.keras.layers.Rescaling(1./255),
+        tf.keras.layers.Conv2D(32, 3, activation='relu'),
+        tf.keras.layers.MaxPooling2D(),
+        tf.keras.layers.Conv2D(32, 3, activation='relu'),
+        tf.keras.layers.MaxPooling2D(),
+        tf.keras.layers.Conv2D(32, 3, activation='relu'),
+        tf.keras.layers.MaxPooling2D(),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dense(num_classes)
+    ])
+
+    model.compile(
+        optimizer='adam',
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        metrics=['accuracy'])
+
+    model.fit(
+        train_ds,
+        validation_data=val_ds,
+        epochs=3
+        )
+
+
 
 if __name__ == "__main__":
+    tf.config.set_visible_devices([], 'GPU')
     flags = get_flags(sys.argv)
     #print(device_lib.list_local_devices())
     
@@ -287,4 +320,5 @@ if __name__ == "__main__":
         elif(flags['algorithm'] == TRAIN_METHODS.VGG16):
             train_vgg16()
 '''
+
 
